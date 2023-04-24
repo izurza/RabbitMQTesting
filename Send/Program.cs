@@ -20,7 +20,7 @@ var body = Encoding.UTF8.GetBytes(message);
 var properties = channel.CreateBasicProperties();
 properties.Persistent = true;
 
-channel.BasicPublish(exchange: "logs",
+channel.BasicPublish(exchange: string.Empty,
     routingKey: "task_queue",
     basicProperties: properties,
     body: body);
