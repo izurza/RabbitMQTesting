@@ -7,13 +7,13 @@ factory.Uri = new Uri("amqps://hazsvrxh:G6d68U1hAgWu78oj-VCEHk8AD9Blyua0@crow.rm
 using var connection = factory.CreateConnection();
 using var channel = connection.CreateModel();
 
-channel.ExchangeDeclare(exchange: "direct_logs", type: ExchangeType.Direct);
+channel.ExchangeDeclare(exchange: "topic_logs", type: ExchangeType.Topic);
 
 var queueName = channel.QueueDeclare().QueueName;
 
 if (args.Length < 1)
 {
-    Console.Error.WriteLine("Usage: {0}[info][warning][error]",
+    Console.Error.WriteLine("Usage: {0}[binding_key...]",
         Environment.GetCommandLineArgs()[0]);
     Console.WriteLine(" Press [enter] to exit");
     Console.ReadLine();
@@ -21,15 +21,15 @@ if (args.Length < 1)
     return;
 }
 
-foreach (var severity in args)
+foreach (var bindingKey in args)
 {
     channel.QueueBind(queue: queueName,
-        exchange: "direct_logs",
-        routingKey: severity);
+        exchange: "topic_logs",
+        routingKey: bindingKey);
 }
 
 
-Console.WriteLine("[*] Waiting for messages.");
+Console.WriteLine("[*] Waiting for messages. to exit press CTRL+C");
 
 var consumer = new EventingBasicConsumer(channel);
 consumer.Received += (model, ea) =>
