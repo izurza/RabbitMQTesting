@@ -2,29 +2,35 @@
 using RabbitMQ.Client;
 
 var factory = new ConnectionFactory { HostName = "crow.rmq.cloudamqp.com" };
-factory.UserName = "****";
-factory.Password = "****";
-factory.Port = 1883;
+factory.Uri = new Uri("amqps://hazsvrxh:G6d68U1hAgWu78oj-VCEHk8AD9Blyua0@crow.rmq.cloudamqp.com/hazsvrxh");
 using var connection = factory.CreateConnection();
 using var channel = connection.CreateModel();
 
 
-channel.QueueDeclare(queue: "hello",
-    durable: false,
+channel.QueueDeclare(queue: "task_queue",
+    durable: true,
     exclusive: false,
     autoDelete: false,
     arguments: null);
 
-const string message = "Hello World!";
+var message = GetMessage(args);
 
 var body = Encoding.UTF8.GetBytes(message);
 
-channel.BasicPublish(exchange: string.Empty,
-    routingKey: "hello",
-    basicProperties: null,
+var properties = channel.CreateBasicProperties();
+properties.Persistent = true;
+
+channel.BasicPublish(exchange: "logs",
+    routingKey: "task_queue",
+    basicProperties: properties,
     body: body);
 
 Console.WriteLine($"[x] Sent {message}");
 
 Console.WriteLine("Press [enter] to exit.");
 Console.ReadLine();
+
+static string GetMessage(string[] args)
+{
+    return ((args.Length > 0) ? string.Join(" ", args) : "Hello World!");
+}
