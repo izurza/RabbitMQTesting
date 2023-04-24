@@ -7,23 +7,18 @@ using var connection = factory.CreateConnection();
 using var channel = connection.CreateModel();
 
 
-channel.QueueDeclare(queue: "task_queue",
-    durable: true,
-    exclusive: false,
-    autoDelete: false,
-    arguments: null);
+var queueName = channel.QueueDeclare().QueueName;
+
+channel.ExchangeDeclare("logs", ExchangeType.Fanout);
 
 var message = GetMessage(args);
 
 var body = Encoding.UTF8.GetBytes(message);
 
-var properties = channel.CreateBasicProperties();
-properties.Persistent = true;
-
-channel.BasicPublish(exchange: string.Empty,
-    routingKey: "task_queue",
-    basicProperties: properties,
-    body: body);
+channel.QueueBind(queue:queueName,
+    exchange: "logs",
+    routingKey: string.Empty,
+   );
 
 Console.WriteLine($"[x] Sent {message}");
 
