@@ -7,11 +7,27 @@ factory.Uri = new Uri("amqps://hazsvrxh:G6d68U1hAgWu78oj-VCEHk8AD9Blyua0@crow.rm
 using var connection = factory.CreateConnection();
 using var channel = connection.CreateModel();
 
+channel.ExchangeDeclare(exchange: "direct_logs", type: ExchangeType.Direct);
+
 var queueName = channel.QueueDeclare().QueueName;
 
-channel.QueueBind(queue: queueName,
-    exchange: "logs",
-    routingKey: string.Empty);
+if (args.Length < 1)
+{
+    Console.Error.WriteLine("Usage: {0}[info][warning][error]",
+        Environment.GetCommandLineArgs()[0]);
+    Console.WriteLine(" Press [enter] to exit");
+    Console.ReadLine();
+    Environment.ExitCode = 1;
+    return;
+}
+
+foreach (var severity in args)
+{
+    channel.QueueBind(queue: queueName,
+        exchange: "direct_logs",
+        routingKey: severity);
+}
+
 
 Console.WriteLine("[*] Waiting for messages.");
 
@@ -20,10 +36,8 @@ consumer.Received += (model, ea) =>
 {
     var body = ea.Body.ToArray();
     var message = Encoding.UTF8.GetString(body);
-    Console.WriteLine($"[x] {message}");
-
-
-    channel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false);
+    var routingKey = ea.RoutingKey;
+    Console.WriteLine($"[x] Received '{routingKey}':'{message}'");
 };
 channel.BasicConsume(queue: queueName,
     autoAck: true,
