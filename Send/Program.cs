@@ -7,18 +7,16 @@ using var connection = factory.CreateConnection();
 using var channel = connection.CreateModel();
 
 
-var queueName = channel.QueueDeclare().QueueName;
-
 channel.ExchangeDeclare("logs", ExchangeType.Fanout);
 
 var message = GetMessage(args);
 
 var body = Encoding.UTF8.GetBytes(message);
 
-channel.QueueBind(queue:queueName,
-    exchange: "logs",
+channel.BasicPublish(exchange: "logs",
     routingKey: string.Empty,
-   );
+    basicProperties: null,
+    body: body);
 
 Console.WriteLine($"[x] Sent {message}");
 
